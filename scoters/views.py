@@ -1,29 +1,37 @@
-from rest_framework import generics
+from rest_framework import viewsets
 from rest_framework import status
 from .serializers import ScotersSerializer
+from rest_framework.response import Response
 from .models import Scoters
 import geopy.distance
+import json
+import collections
 
 
-class ScoterListView(generics.ListCreateAPIView):
-    queryset = Scoters.objects.all()
+class ScoterListView(viewsets.ModelViewSet):
+    queryset = Scoters.objects.filter(is_reserved=False)
 
     serializer_class = ScotersSerializer
 
-    # def get_queryset(self):
+    def list(self, request):
+        lat = self.request.GET.get('lat', None)
+        lng = self.request.GET.get('lng', None)
+        radius = self.request.GET.get('radius', None)
+        queryset = Scoters.objects.filter(is_reserved=False)
+        serializer = ScotersSerializer(queryset, many=True)
+        if (lat == None or lng == None or radius == None):
+            return Response(serializer.data)
+        return Response(self.filter_if_not_within_radius(serializer.data, lat, lng, radius))
 
-    #     lat = self.request.GET.get('lat', None)
-    #     lng = self.request.GET.get('lng', None)
-    #     radius = self.request.GET.get('radius', None)
-    #     if self.action == 'filter_shippings':
-    #         queryset = queryset.filter(status=2, orderStatus=0)
-    #     elif self.action == 'other_action':
-    #         queryset = queryset.filter(...)  # other action filter
+    def filter_if_not_within_radius(self, data, lat, lng, radius):
 
-    #     return queryset
+        scoters = json.loads(json.dumps(data))
+        filtered_scoters = []
+        for scoter in scoters:
+            # print(scoter['lat'])
+            distance_m = geopy.distance.vincenty(
+                (lat, lng), (scoter['lat'], scoter['lng'])).meters
+            if(distance_m <= float(radius)):
+                filtered_scoters.append(collections.OrderedDict(scoter))
 
-
-# class ScoterDetailView(generics.ListCreateAPIView):
-#     queryset = Scoters.objects.filter(id=id)
-
-#     serializer_class = ScotersSerializer
+        return filtered_scoters  # json.dumps(filtered_scoters)

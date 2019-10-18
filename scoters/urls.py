@@ -1,6 +1,10 @@
-from django.urls import path
-from .views import ScoterListView, ScoterDetailView
+from django.urls import path, include
+from .views import ScoterListView  # ScoterDetailView
+from rest_framework import routers
+
+router = routers.DefaultRouter()
+router.register('available', ScoterListView)
 urlpatterns = [
-    path('/available', ScoterListView.as_view()),
-    path('/available/<id>', ScoterDetailView.as_view())
+    path('', include(router.urls))
+    # path('/available/<id>', ScoterDetailView.as_view())
 ]
