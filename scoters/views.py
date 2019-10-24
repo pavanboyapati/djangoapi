@@ -9,7 +9,7 @@ import collections
 
 
 class ScoterListView(viewsets.ModelViewSet):
-    queryset = Scoters.objects.filter(is_reserved=False)
+    queryset = Scoters.objects.all()
 
     serializer_class = ScotersSerializer
 
@@ -19,7 +19,7 @@ class ScoterListView(viewsets.ModelViewSet):
         radius = self.request.GET.get('radius', None)
         queryset = Scoters.objects.filter(is_reserved=False)
         serializer = ScotersSerializer(queryset, many=True)
-        if (lat == None or lng == None or radius == None):
+        if (lat is None or lng is None or radius is None):
             return Response(serializer.data)
         return Response(self.filter_if_not_within_radius(serializer.data, lat, lng, radius))
 
